@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>服务器终端</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #0d0d0d;
+      color: #00ff00;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .typewriter-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 60px;
+      margin-bottom: 20px;
+      font-size: 2rem;
+      color: #00ff00;
+      text-shadow: 0 0 10px #00ff00;
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: 2px solid;
+      animation: blink-caret 0.75s step-end infinite;
+    }
+    @keyframes blink-caret {
+      from, to {
+        border-color: transparent;
+      }
+      50% {
+        border-color: #00ff00;
+      }
+    }
+    #output {
+      width: 80%;
+      max-width: 1000px;
+      height: 400px;
+      background-color: #1d1d1d;
+      border: 2px solid #00ff00;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      overflow-y: auto;
+      color: #00ff00;
+      font-family: 'Courier New', Courier, monospace;
+      box-shadow: 0 0 20px #00ff00;
+      transition: box-shadow 0.3s;
+    }
+    #output:hover {
+      box-shadow: 0 0 40px #00ff00;
+    }
+    #commandInput {
+      width: 80%;
+      max-width: 1000px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #1d1d1d;
+      color: #00ff00;
+      border: 2px solid #00ff00;
+      border-radius: 5px;
+      box-shadow: 0 0 10px #00ff00;
+      font-size: 1rem;
+    }
+    #executeButton, .control-button {
+      width: 200px;
+      padding: 10px;
+      margin: 5px;
+      background-color: #1d1d1d;
+      color: #00ff00;
+      border: 2px solid #00ff00;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s, transform 0.3s;
+    }
+    #executeButton:hover, .control-button:hover {
+      background-color: #00ff00;
+      color: #1d1d1d;
+      transform: scale(1.05);
+    }
+    #buttons {
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="typewriter-container" id="typewriter"></div>
+  <div id="output"></div>
+  <input id="commandInput" type="text" placeholder="输入命令 回车       警告：禁止输入有害计算机的一切命令[包括关机重启的命令]">
+  <button id="executeButton"><i class="fas fa-play"></i> 回车</button>
+  <div id="buttons">
+    <button id="startMCServerButton" class="control-button" disabled><i class="fas fa-power-off"></i> 启动MC服务器</button>
+    <button id="restartMCServerButton" class="control-button" disabled><i class="fas fa-sync-alt"></i> 重启MC服务器</button>
+    <button id="stopMCServerButton" class="control-button" disabled><i class="fas fa-stop"></i> 结束MC服务器</button>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const outputDiv = document.getElementById('output');
+    const commandInput = document.getElementById('commandInput');
+    const executeButton = document.getElementById('executeButton');
+    const startMCServerButton = document.getElementById('startMCServerButton');
+    const restartMCServerButton = document.getElementById('restartMCServerButton');
+    const stopMCServerButton = document.getElementById('stopMCServerButton');
+    const typewriterText = '猫猫服务器[管理员超级终端]';
+    const typewriterContainer = document.getElementById('typewriter');
+
+    let index = 0;
+
+    function typeWriter() {
+      if (index < typewriterText.length) {
+        typewriterContainer.innerHTML += typewriterText.charAt(index);
+        index++;
+        setTimeout(typeWriter, 100);
+      }
+    }
+
+    typeWriter();
+
+    // Listen for CMD output
+    socket.on('cmdOutput', (data) => {
+      outputDiv.innerHTML += data;
+      outputDiv.scrollTop = outputDiv.scrollHeight;
+    });
+
+    // Listen for MC server status
+    socket.on('mcServerStatus', (status) => {
+      if (status === 'running') {
+        startMCServerButton.disabled = true;
+        restartMCServerButton.disabled = false;
+        stopMCServerButton.disabled = false;
+      } else {
+        startMCServerButton.disabled = false;
+        restartMCServerButton.disabled = true;
+        stopMCServerButton.disabled = true;
+      }
+    });
+
+    // Execute command
+    executeButton.addEventListener('click', () => {
+      const command = commandInput.value;
+      socket.emit('executeCommand', command);
+      commandInput.value = '';
+    });
+
+    // Start MC server
+    startMCServerButton.addEventListener('click', () => {
+      socket.emit('startMCServer');
+    });
+
+    // Restart MC server
+    restartMCServerButton.addEventListener('click', () => {
+      socket.emit('restartMCServer');
+    });
+
+    // Stop MC server
+    stopMCServerButton.addEventListener('click', () => {
+      socket.emit('stopMCServer');
+    });
+
+    // Enable pressing Enter to send command
+    commandInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        executeButton.click();
+      }
+    });
+  </script>
+</body>
+</html>

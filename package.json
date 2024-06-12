@@ -1,0 +1,20 @@
+{
+  "name": "2",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "ansi-to-html": "^0.7.2",
+    "child_process": "^1.0.2",
+    "express": "^4.19.2",
+    "iconv-lite": "^0.6.3",
+    "socket.io": "^4.7.5"
+  }
+}
